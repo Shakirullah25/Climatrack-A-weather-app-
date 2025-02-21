@@ -139,182 +139,189 @@ class _WeatherAppScreenState extends State<WeatherAppScreen> {
             ),
           ),
         ),
-        body: FutureBuilder(
-          future: _weatherDataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.blueGrey),
-              );
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/connection.png',
-                      height: 150,
-                      width: 200,
-                      color: Colors.grey,
-                      alignment: Alignment.center,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Looks like you're not connected to the internet",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10), // Space between the error texts
-                    const Text(
-                      "Let's get you back online!",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(
-                        height: 20), // space between text and the retry button
-                    ElevatedButton.icon(
-                      label: const Text('Try again'),
-                      onPressed: () {
-                        setState(() {
-                          _weatherDataFuture =
-                              fetchCurrentWeatherData(selectedCity);
-                        }); // Retry fetching data
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0078D3),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 18),
-                        textStyle: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                      ),
-                      icon: const Center(
-                          child: Icon(
-                        Icons.refresh,
-                      )),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final data = snapshot.data;
-
-            final weatherCondition = data!['list'][0];
-
-            // Safe extraction of data with default values
-            final currentTemp = (weatherCondition['main']['temp'] as num)
-                .toDouble(); // Ensuring it's double
-            final skyCondition =
-                weatherCondition['weather'][0]['main'] ?? 'Unknown';
-            final skyIcon =
-                weatherCondition['weather'][0]['icon'] ?? '01d'; // Default icon
-            final humidityData = (weatherCondition['main']['humidity'] as num)
-                .toInt(); // Convert to int
-            final pressureData = (weatherCondition['main']['pressure'] as num)
-                .toInt(); // Convert to int
-            final windSpeedData = (weatherCondition['wind']['speed'] as num)
-                .toDouble(); // Ensure it's double
-
-            // Extract hourly data (first 6 entries)
-            List<Map<String, dynamic>> hourlyData = [];
-            for (int i = 0; i < 6; i++) {
-              final hourlyWeather = data['list'][i + 1];
-              final time = DateTime.parse(hourlyWeather['dt_txt']);
-
-              hourlyData.add(
-                {
-                  'time': DateFormat('h:mm a').format(time),
-                  'temp': (hourlyWeather['main']['temp'] as num).toString(),
-                  'icon': hourlyWeather['weather'][0]['icon'] ?? '01d',
-                },
-              );
-            }
-
-            return RefreshIndicator(
-              color: Colors.white,
-              backgroundColor: Colors.blueGrey,
-              onRefresh: _onRefresh,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: 'Select city',
-                        labelStyle: TextStyle(
-                          color: Colors.white,
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(22),
-                      menuMaxHeight: 320,
-
-                      // dropdownColor: Colors.grey,
-                      //isExpanded: true,
-                      value: selectedCity,
-                      onChanged: (String? newCity) {
-                        if (newCity != null) {
-                          setState(() {
-                            selectedCity = newCity;
-                            _weatherDataFuture = fetchCurrentWeatherData(
-                                selectedCity); // Refetch data
-                          });
-                        }
-                      },
-                      items: statesInNigeria
-                          .map<DropdownMenuItem<String>>((String states) {
-                        return DropdownMenuItem<String>(
-                          value: states,
-                          child: Text(states),
-                        );
-                      }).toList(),
-                    ),
-                    WeatherScreen(
-                      screenWidth: screenWidth,
-                      currentTemp: currentTemp,
-                      skyIcon: skyIcon,
-                      skyCondition: skyCondition,
-                      hourlyData: hourlyData,
-                      humidityData: humidityData,
-                      pressureData: pressureData,
-                      windSpeedData: windSpeedData,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
+        body: body(screenWidth),
       ),
     );
+  }
+
+
+// Body of the app
+
+  FutureBuilder<Map<String, dynamic>> body(double screenWidth) {
+    return FutureBuilder(
+        future: _weatherDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.blueGrey),
+            );
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/connection.png',
+                    height: 150,
+                    width: 200,
+                    color: Colors.grey,
+                    alignment: Alignment.center,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Looks like you're not connected to the internet",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10), // Space between the error texts
+                  const Text(
+                    "Let's get you back online!",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(
+                      height: 20), // space between text and the retry button
+                  ElevatedButton.icon(
+                    label: const Text('Try again'),
+                    onPressed: () {
+                      setState(() {
+                        _weatherDataFuture =
+                            fetchCurrentWeatherData(selectedCity);
+                      }); // Retry fetching data
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0078D3),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 18),
+                      textStyle: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                    ),
+                    icon: const Center(
+                        child: Icon(
+                      Icons.refresh,
+                    )),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final data = snapshot.data;
+
+          final weatherCondition = data!['list'][0];
+
+          // Safe extraction of data with default values
+          final currentTemp = (weatherCondition['main']['temp'] as num)
+              .toDouble(); // Ensuring it's double
+          final skyCondition =
+              weatherCondition['weather'][0]['main'] ?? 'Unknown';
+          final skyIcon =
+              weatherCondition['weather'][0]['icon'] ?? '01d'; // Default icon
+          final humidityData = (weatherCondition['main']['humidity'] as num)
+              .toInt(); // Convert to int
+          final pressureData = (weatherCondition['main']['pressure'] as num)
+              .toInt(); // Convert to int
+          final windSpeedData = (weatherCondition['wind']['speed'] as num)
+              .toDouble(); // Ensure it's double
+
+          // Extract hourly data (first 6 entries)
+          List<Map<String, dynamic>> hourlyData = [];
+          for (int i = 0; i < 6; i++) {
+            final hourlyWeather = data['list'][i + 1];
+            final time = DateTime.parse(hourlyWeather['dt_txt']);
+
+            hourlyData.add(
+              {
+                'time': DateFormat('h:mm a').format(time),
+                'temp': (hourlyWeather['main']['temp'] as num).toString(),
+                'icon': hourlyWeather['weather'][0]['icon'] ?? '01d',
+              },
+            );
+          }
+
+          return RefreshIndicator(
+            color: Colors.white,
+            backgroundColor: Colors.blueGrey,
+            onRefresh: _onRefresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Select city',
+                      labelStyle: TextStyle(
+                        color: Colors.white,
+                      ),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.white,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.white,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(22),
+                    menuMaxHeight: 320,
+
+                    // dropdownColor: Colors.grey,
+                    //isExpanded: true,
+                    value: selectedCity,
+                    onChanged: (String? newCity) {
+                      if (newCity != null) {
+                        setState(() {
+                          selectedCity = newCity;
+                          _weatherDataFuture = fetchCurrentWeatherData(
+                              selectedCity); // Refetch data
+                        });
+                      }
+                    },
+                    items: statesInNigeria
+                        .map<DropdownMenuItem<String>>((String states) {
+                      return DropdownMenuItem<String>(
+                        value: states,
+                        child: Text(states),
+                      );
+                    }).toList(),
+                  ),
+                  WeatherScreen(
+                    screenWidth: screenWidth,
+                    currentTemp: currentTemp,
+                    skyIcon: skyIcon,
+                    skyCondition: skyCondition,
+                    hourlyData: hourlyData,
+                    humidityData: humidityData,
+                    pressureData: pressureData,
+                    windSpeedData: windSpeedData,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
   }
 }
